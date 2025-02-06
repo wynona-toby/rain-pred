@@ -55,6 +55,7 @@ export default function App() {
     - Precipitation Probability: ${todayPrecipitationProbability}%
 
     Explain how these factors influence the forecast, the expected weather conditions, and how the probability of rain is determined. Provide recommendations for daily activities based on the forecast, including any precautions for heavy rain, light rain, or no rain.
+    Dont include * or ** in your answer
     `;
 
     try {
