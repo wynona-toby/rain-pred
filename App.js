@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, Button, ActivityIndicator, StyleSheet, TextInput, ScrollView } from "react-native";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { fetchWeather, getCoordinates } from "./src/fetchrain";
 
 export default function App() {
@@ -8,7 +9,11 @@ export default function App() {
   const [city, setCity] = useState("");
   const [error, setError] = useState(null);
   const [explanation, setExplanation] = useState("");
-  const [explanationVisible, setExplanationVisible] = useState(false); // New state for toggling visibility
+  const [explanationVisible, setExplanationVisible] = useState(false);
+
+  // Google Generative AI setup
+  const genAI = new GoogleGenerativeAI("AIzaSyCRcEF3YEFm9NUH1r_LZEafqadrFdMOgyc");  // Replace with your actual API key
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const getWeather = async () => {
     if (!city) {
@@ -31,34 +36,36 @@ export default function App() {
     setLoading(false);
   };
 
-  const explainRainfall = () => {
+  const explainRainfall = async () => {
     if (!weatherData) return;
 
     const todayRain = weatherData.daily.rainSum[0];
+    const todayTempMax = weatherData.daily.temperature2mMax[0];
+    const todayTempMin = weatherData.daily.temperature2mMin[0];
+    const todayWindSpeed = weatherData.daily.windSpeed10mMax[0];
+    const todayPrecipitationProbability = weatherData.daily.precipitationProbabilityMax[0];
 
-    let explanationText = `Based on today's rainfall prediction: \n`;
+    const weatherPrompt = `
+    Given the following weather forecast for today:
 
-    if (todayRain > 10) {
-      explanationText += `Heavy rainfall is expected today.\n`;
-    } else if (todayRain > 0) {
-      explanationText += `Light rain is expected today.\n`;
-    } else {
-      explanationText += `No rain is expected today.\n`;
+    - Rainfall: ${todayRain} mm
+    - Max Temperature: ${todayTempMax}°C
+    - Min Temperature: ${todayTempMin}°C
+    - Wind Speed: ${todayWindSpeed} km/h
+    - Precipitation Probability: ${todayPrecipitationProbability}%
+
+    Explain how these factors influence the forecast, the expected weather conditions, and how the probability of rain is determined. Provide recommendations for daily activities based on the forecast, including any precautions for heavy rain, light rain, or no rain.
+    `;
+
+    try {
+      const result = await model.generateContent(weatherPrompt);
+      setExplanation(result.response.text());
+      setExplanationVisible(true);
+    } catch (error) {
+      console.error("Error fetching Gemini explanation:", error);
+      setExplanation("Could not fetch an explanation from Gemini.");
+      setExplanationVisible(true);
     }
-
-    explanationText += `\nHow this conclusion was reached: \n`;
-    explanationText += `The prediction is based on a combination of historical weather data and current atmospheric conditions, including temperature, humidity, wind speed, and pressure. These factors contribute to the forecast model used to predict rainfall. The forecast model applies statistical algorithms and machine learning techniques trained on large datasets of historical weather patterns. The model incorporates real-time data to ensure accuracy in prediction.\n`;
-
-    explanationText += `\nPreferred Activities: \n`;
-    if (todayRain > 10) {
-      explanationText += `- Stay indoors or plan indoor activities like reading, cooking, or watching movies. \n`;
-    } else if (todayRain > 0) {
-      explanationText += `- You can still enjoy some outdoor activities, but carry an umbrella just in case. \n`;
-    } else {
-      explanationText += `- Ideal for outdoor activities like sports, walks, or sightseeing. \n`;
-    }
-    setExplanation(explanationText);
-    setExplanationVisible(!explanationVisible); // Toggle explanation visibility
   };
 
   return (
@@ -110,8 +117,11 @@ export default function App() {
             ))}
           </ScrollView>
 
-          <Button title={explanationVisible ? "Collapse Explanation" : "Explain Rainfall"} onPress={explainRainfall} />
-          
+          <Button
+            title={explanationVisible ? "Collapse Explanation" : "Explain Rainfall"}
+            onPress={explainRainfall}
+          />
+
           {explanationVisible && (
             <View style={styles.explanationContainer}>
               <Text style={styles.explanationText}>{explanation}</Text>
