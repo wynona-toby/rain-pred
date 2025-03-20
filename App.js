@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, Button, ActivityIndicator, StyleSheet, TextInput, ScrollView } from "react-native";
+import { View, Text, Button, ActivityIndicator, StyleSheet, TextInput, ScrollView, Alert } from "react-native";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { fetchWeather, getCoordinates } from "./src/fetchrain";
+import { fetchWeather, getCoordinates, fetchPredictedWeather } from "./src/fetchrain";
 
 export default function App() {
   const [weatherData, setWeatherData] = useState(null);
+  const [predictedData, setPredictedData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [city, setCity] = useState("");
   const [error, setError] = useState(null);
@@ -32,14 +33,22 @@ export default function App() {
     }
 
     const data = await fetchWeather(location.latitude, location.longitude);
+    const predicted = await fetchPredictedWeather(location.latitude, location.longitude);
+    console.log(predicted.predicted);
     setWeatherData(data);
+    setPredictedData(predicted);
     setLoading(false);
   };
 
   const explainRainfall = async () => {
-    if (!weatherData) return;
+    if (!weatherData || !predictedData) return;
 
-    const todayRain = weatherData.daily.rainSum[0];
+    // const todayPredRain = predictedData.predicted.rain[0].toFixed(2);
+    const todayRain = weatherData.daily.rainSum[0].toFixed(2);
+    const todayPrecipitation = predictedData.predicted.precipitation[0].toFixed(2);
+    const todayPrecipitationHrs = predictedData.predicted.precipitationHours[0].toFixed(2);
+    const todayRiverDischarge = predictedData.predicted.riverDischarge[0].toFixed(2);
+    const todayFloodRisk = predictedData.predicted.floodRisk[0];
     const todayTempMax = weatherData.daily.temperature2mMax[0];
     const todayTempMin = weatherData.daily.temperature2mMin[0];
     const todayWindSpeed = weatherData.daily.windSpeed10mMax[0];
@@ -49,10 +58,14 @@ export default function App() {
     Given the following weather forecast for today:
 
     - Rainfall: ${todayRain} mm
+    - Precipitation: ${todayPrecipitation} mm
+    - Precipitation Probability: ${todayPrecipitationProbability}%
+    - Precipitation Hours: ${todayPrecipitationHrs} hours
+    - River Discharge: ${todayRiverDischarge} m³/s
     - Max Temperature: ${todayTempMax}°C
     - Min Temperature: ${todayTempMin}°C
     - Wind Speed: ${todayWindSpeed} km/h
-    - Precipitation Probability: ${todayPrecipitationProbability}%
+    - Flood Risk: ${todayFloodRisk}
 
     Explain how these factors influence the forecast, the expected weather conditions, and how the probability of rain is determined. Provide recommendations for daily activities based on the forecast, including any precautions for heavy rain, light rain, or no rain.
     Dont include * or ** in your answer
@@ -94,32 +107,76 @@ export default function App() {
 
           {/* Centered Rainfall */}
           <Text style={[styles.rainText, styles.boldText]}>
-            🌧️ {weatherData.daily.rainSum[0]} mm
+            🌧️ {predictedData.predicted.rain[0].toFixed(2)} mm
           </Text>
 
           {/* Other Details Below */}
           <View style={styles.details}>
+            <Text style={{ color: "red" }}>
+              ⚠️ Flood Risk:{" "}
+              {predictedData.predicted.floodRisk[0] ? "Yes" : "No"}
+            </Text>
+            <br />
             <Text>🌡️ Max Temp: {weatherData.daily.temperature2mMax[0]}°C</Text>
             <Text>❄️ Min Temp: {weatherData.daily.temperature2mMin[0]}°C</Text>
-            <Text>☔ Precipitation: {weatherData.daily.precipitationProbabilityMax[0]}%</Text>
-            <Text>💨 Wind Speed: {weatherData.daily.windSpeed10mMax[0]} km/h</Text>
+            <Text>
+              ☔ Precipitation:{" "}
+              {predictedData.predicted.precipitation[0].toFixed(2)} mm
+            </Text>
+            <Text>
+              ⌛ Precipitation Hours:{" "}
+              {predictedData.predicted.precipitationHours[0].toFixed(2)} hrs
+            </Text>
+            <Text>
+              🌊 River Discharge:{" "}
+              {predictedData.predicted.riverDischarge[0].toFixed(2)} m³/s
+            </Text>
+            <Text>
+              💨 Wind Speed: {weatherData.daily.windSpeed10mMax[0]} km/h
+            </Text>
           </View>
 
           {/* Scrollable Cards for Future Days */}
-          <Text style={[styles.scrollHeader, styles.boldText]}>Upcoming Days</Text>
+          <Text style={[styles.scrollHeader, styles.boldText]}>
+            Upcoming Days
+          </Text>
           <ScrollView horizontal style={styles.scrollContainer}>
             {weatherData.daily.time.slice(1).map((date, index) => (
               <View key={index} style={styles.card}>
                 <Text style={styles.cardDate}>{date.toDateString()}</Text>
-                <Text>🌧️ {weatherData.daily.rainSum[index + 1]} mm</Text>
-                <Text>🌡️ {weatherData.daily.temperature2mMax[index + 1]}°C</Text>
-                <Text>💨 Wind: {weatherData.daily.windSpeed10mMax[index + 1]} km/h</Text>
+                <Text style={{ color: "red" }}>
+                  ⚠️ Flood Risk:{" "}
+                  {predictedData.predicted.floodRisk[0] ? "Yes" : "No"}
+                </Text>
+                <Text>
+                  🌧️ {predictedData.predicted.rain[index + 1].toFixed(2)} mm
+                </Text>
+                <Text>
+                  🌡️ {weatherData.daily.temperature2mMax[index + 1]}°C
+                </Text>
+                <Text>
+                  ⌛{" "}
+                  {predictedData.predicted.precipitationHours[
+                    index + 1
+                  ].toFixed(2)}{" "}
+                  hrs
+                </Text>
+                <Text>
+                  🌊{" "}
+                  {predictedData.predicted.riverDischarge[index + 1].toFixed(2)}{" "}
+                  m³/s
+                </Text>
+                <Text>
+                  💨 {weatherData.daily.windSpeed10mMax[index + 1]} km/h
+                </Text>
               </View>
             ))}
           </ScrollView>
 
           <Button
-            title={explanationVisible ? "Collapse Explanation" : "Explain Rainfall"}
+            title={
+              explanationVisible ? "Collapse Explanation" : "Explain Rainfall"
+            }
             onPress={explainRainfall}
           />
 

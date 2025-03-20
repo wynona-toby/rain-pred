@@ -29,7 +29,7 @@ export const fetchWeather = async (latitude: number, longitude: number) => {
 
     return {
       daily: {
-        time: data.daily.time.map((t: string) => new Date(t)), // Convert string to Date
+        time: data.daily.time.map((t: string) => new Date(t)),
         temperature2mMax: data.daily.temperature_2m_max,
         temperature2mMin: data.daily.temperature_2m_min,
         rainSum: data.daily.rain_sum,
@@ -39,6 +39,45 @@ export const fetchWeather = async (latitude: number, longitude: number) => {
     };
   } catch (error) {
     console.error("Error fetching weather:", error);
+    return null;
+  }
+};
+
+
+export const fetchPredictedWeather = async (
+  latitude: number,
+  longitude: number
+) => {
+  try {
+    const url = `http://localhost:5000/predict`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ latitude, longitude }),
+    });
+
+    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+    const data = await response.json();
+
+    return {
+      predicted: {
+        time: data.dates.map((t: string) => new Date(t)), // Convert string to Date
+        precipitation: data.predictions.map((p: number[]) => p[0]),
+        rain: data.predictions.map((p: number[]) => p[1]),
+        precipitationHours: data.predictions.map((p: number[]) => p[2]),
+        riverDischarge: data.predictions.map((p: number[]) => p[3]),
+        floodRisk: data.predictions.map(
+          (p: number[]) =>
+            (p[0] >= 5.0 && p[1] >= 10.0) || p[2] >= 15.0 || p[3] >= 12.0
+        ),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching predicted weather:", error);
     return null;
   }
 };
