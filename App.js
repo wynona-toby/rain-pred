@@ -46,7 +46,6 @@ export default function App() {
     // const todayPredRain = predictedData.predicted.rain[0].toFixed(2);
     const todayRain = weatherData.daily.rainSum[0].toFixed(2);
     const todayPrecipitation = predictedData.predicted.precipitation[0].toFixed(2);
-    const todayPrecipitationHrs = predictedData.predicted.precipitationHours[0].toFixed(2);
     const todayRiverDischarge = predictedData.predicted.riverDischarge[0].toFixed(2);
     const todayFloodRisk = predictedData.predicted.floodRisk[0];
     const todayTempMax = weatherData.daily.temperature2mMax[0];
@@ -60,7 +59,6 @@ export default function App() {
     - Rainfall: ${todayRain} mm
     - Precipitation: ${todayPrecipitation} mm
     - Precipitation Probability: ${todayPrecipitationProbability}%
-    - Precipitation Hours: ${todayPrecipitationHrs} hours
     - River Discharge: ${todayRiverDischarge} m³/s
     - Max Temperature: ${todayTempMax}°C
     - Min Temperature: ${todayTempMin}°C
@@ -116,7 +114,6 @@ export default function App() {
               ⚠️ Flood Risk:{" "}
               {predictedData.predicted.floodRisk[0] ? "Yes" : "No"}
             </Text>
-            <br />
             <Text>🌡️ Max Temp: {weatherData.daily.temperature2mMax[0]}°C</Text>
             <Text>❄️ Min Temp: {weatherData.daily.temperature2mMin[0]}°C</Text>
             <Text>

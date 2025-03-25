@@ -10,7 +10,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load the pre-trained model
-model = load_model("predictions.keras")
+model = load_model("predictions15.keras")
 
 # Function to fetch weather data
 def fetch_weather_data(latitude, longitude, start_date, end_date):
@@ -94,7 +94,7 @@ def predict():
         longitude = data["longitude"]
 
         yesterday = datetime.today().date() - timedelta(days=1)
-        start_date = yesterday - timedelta(days=60)
+        start_date = yesterday - timedelta(days=15)
 
         weather_data = fetch_weather_data(latitude, longitude, start_date, yesterday)
         discharge_data = fetch_discharge_data(latitude, longitude, start_date, yesterday)
