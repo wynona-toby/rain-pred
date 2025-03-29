@@ -708,6 +708,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: isMobile ? 10 : 20,
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: isMobile ? "column" : "row",
   },
   explanationButton: {
     flexDirection: "row",
@@ -746,7 +747,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   card: {
-    width: isMobile ? width * 0.4 : width / 6.8,
+    width: isMobile ? width / 1.2 : width / 6.8,
     margin: "auto",
     marginRight: isMobile ? 8 : 15,
     borderRadius: 20,
