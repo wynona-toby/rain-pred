@@ -292,9 +292,9 @@ export default function App() {
               },
             ]}
           >
-            <Text style={styles.headerTitle}>Weather Forecast</Text>
+            <Text style={styles.headerTitle}>Rain and Flood Predictions</Text>
             <Text style={styles.headerSubtitle}>
-              Get accurate weather predictions
+              Get accurate predictions
             </Text>
           </Animated.View>
 
