@@ -9,6 +9,7 @@ import {
   Dimensions,
   Animated,
   TouchableOpacity,
+  Modal,
 } from "react-native";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
@@ -37,6 +38,7 @@ export default function App() {
   const [slideAnim] = useState(new Animated.Value(50));
   const [headerAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.95));
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Google Generative AI setup
   const genAI = new GoogleGenerativeAI(
@@ -274,6 +276,7 @@ export default function App() {
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
+          style={styles.mainScroll}
         >
           {/* Header Section */}
           <Animated.View
@@ -292,11 +295,78 @@ export default function App() {
               },
             ]}
           >
-            <Text style={styles.headerTitle}>Weather Forecast</Text>
-            <Text style={styles.headerSubtitle}>
-              Get accurate weather predictions
-            </Text>
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerTitle}>Rain and Flood Predictions</Text>
+              <TouchableOpacity
+                onPress={() => setModalVisible(true)}
+                style={styles.infoButton}
+              >
+                <MaterialIcons name="info-outline" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.headerSubtitle}>Get accurate predictions</Text>
           </Animated.View>
+
+          {/* Info Modal */}
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Prediction Information</Text>
+                  <TouchableOpacity
+                    onPress={() => setModalVisible(false)}
+                    style={styles.closeButton}
+                  >
+                    <MaterialIcons name="close" size={24} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+                <ScrollView
+                  style={[styles.modalBody, styles.customScroll]}
+                  showsVerticalScrollIndicator={true}
+                  contentContainerStyle={styles.modalBodyContent}
+                >
+                  <Text style={styles.modalText}>
+                    This weather prediction application uses advanced machine
+                    learning models and APIs to provide accurate weather
+                    forecasts:
+                  </Text>
+                  <View style={styles.modelDetail}>
+                    <Text style={styles.modelTitle}>🤖 AI Model</Text>
+                    <Text style={styles.modelDescription}>
+                      Powered by Google's Gemini 1.5 Flash model for detailed
+                      weather analysis and explanations.
+                    </Text>
+                  </View>
+                  <View style={styles.modelDetail}>
+                    <Text style={styles.modelTitle}>🌦️ Weather Data</Text>
+                    <Text style={styles.modelDescription}>
+                      Utilizes OpenWeather API for real-time weather information
+                      and forecasting.
+                    </Text>
+                  </View>
+                  <View style={styles.modelDetail}>
+                    <Text style={styles.modelTitle}>🌊 Flood Predictions</Text>
+                    <Text style={styles.modelDescription}>
+                      Incorporates river discharge data and precipitation
+                      patterns to assess flood risks.
+                    </Text>
+                  </View>
+                  <View style={styles.modelDetail}>
+                    <Text style={styles.modelTitle}>📍 Location Services</Text>
+                    <Text style={styles.modelDescription}>
+                      Uses Expo Location for precise geographical positioning
+                      and city detection.
+                    </Text>
+                  </View>
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
 
           {/* Search Section */}
           <View style={styles.searchSection}>
@@ -345,7 +415,7 @@ export default function App() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              style={styles.savedLocations}
+              style={[styles.savedLocations, styles.customScroll]}
             >
               {savedLocations.map((loc, index) => (
                 <TouchableOpacity
@@ -468,8 +538,10 @@ export default function App() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                style={styles.forecastContainer}
+                style={[styles.forecastContainer, styles.customScroll]}
                 contentContainerStyle={styles.forecastContent}
+                snapToInterval={isMobile ? width / 1.2 + 8 : width / 6.8 + 15}
+                decelerationRate="fast"
               >
                 {weatherData.daily.time.slice(1).map((date, index) => (
                   <WeatherCard key={index} date={date} index={index} />
@@ -535,11 +607,16 @@ const styles = StyleSheet.create({
     padding: isMobile ? 15 : 20,
     alignItems: "center",
   },
+  headerTitleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
   headerTitle: {
     fontSize: isMobile ? 28 : 32,
     fontWeight: "bold",
     color: "#fff",
-    marginBottom: 8,
   },
   headerSubtitle: {
     fontSize: isMobile ? 14 : 16,
@@ -822,5 +899,99 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     fontWeight: "bold",
+  },
+  infoButton: {
+    marginLeft: 10,
+    padding: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "#1a237e",
+    borderRadius: 20,
+    width: "100%",
+    maxWidth: 500,
+    maxHeight: "80%",
+    padding: 0,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  modalTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  closeButton: {
+    padding: 5,
+  },
+  modalBody: {
+    padding: 20,
+  },
+  modalText: {
+    color: "#fff",
+    fontSize: 16,
+    marginBottom: 20,
+    lineHeight: 24,
+  },
+  modelDetail: {
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+  },
+  modelTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  modelDescription: {
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  mainScroll: {
+    scrollbarWidth: "thin",
+    scrollbarColor: "rgba(255,255,255,0.3) transparent",
+  },
+  customScroll: {
+    scrollbarWidth: "thin",
+    scrollbarColor: "rgba(255,255,255,0.3) transparent",
+    "&::-webkit-scrollbar": {
+      width: "6px",
+      height: "6px",
+    },
+    "&::-webkit-scrollbar-track": {
+      background: "transparent",
+    },
+    "&::-webkit-scrollbar-thumb": {
+      backgroundColor: "rgba(255,255,255,0.3)",
+      borderRadius: "20px",
+    },
+    "&::-webkit-scrollbar-thumb:hover": {
+      backgroundColor: "rgba(255,255,255,0.5)",
+    },
+  },
+  modalBodyContent: {
+    paddingBottom: 20,
   },
 });

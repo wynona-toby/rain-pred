@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "rain-pred",
-    "slug": "rain-pred",
+    "name": "Rain and Flood Predictions",
+    "slug": "rain-flood-predictions",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
