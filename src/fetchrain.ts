@@ -72,7 +72,7 @@ export const fetchPredictedWeather = async (
         riverDischarge: data.predictions.map((p: number[]) => p[3]),
         floodRisk: data.predictions.map(
           (p: number[]) =>
-            (p[0] >= 5.0 && p[1] >= 10.0) || p[2] >= 15.0 || p[3] >= 12.0
+            (p[0] >= 5.0 && p[1] >= 10.0) || p[2] >= 5.0 || p[3] >= 12.0
         ),
       },
     };

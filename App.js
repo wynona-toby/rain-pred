@@ -223,6 +223,12 @@ export default function App() {
             <Text style={styles.rainAmount}>{rain} mm</Text>
           </View>
 
+          {predictedData.predicted.floodRisk[index + 1] && (
+            <View style={styles.floodWarning}>
+              <Text style={styles.floodWarningText}>⚠️ Flood Risk</Text>
+            </View>
+          )}
+
           <View style={styles.cardDetails}>
             <View style={styles.detailRow}>
               <Text style={styles.detailIcon}>⌛</Text>
@@ -256,12 +262,6 @@ export default function App() {
               </Text>
             </View>
           </View>
-
-          {predictedData.predicted.floodRisk[index + 1] && (
-            <View style={styles.floodWarning}>
-              <Text style={styles.floodWarningText}>⚠️ Flood Risk</Text>
-            </View>
-          )}
         </LinearGradient>
       </View>
     );
@@ -893,7 +893,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(244,67,54,0.2)",
     padding: 10,
     borderRadius: 10,
-    marginTop: 10,
+    marginBottom: 10,
   },
   floodWarningText: {
     color: "#fff",
