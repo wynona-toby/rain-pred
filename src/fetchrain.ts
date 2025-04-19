@@ -49,7 +49,7 @@ export const fetchPredictedWeather = async (
   longitude: number
 ) => {
   try {
-    const url = `https://rain-pred-production.up.railway.app/predict`;
+    const url = `https://rain-pred-mdvg.onrender.com/predict`;
 
     const response = await fetch(url, {
       method: "POST",
