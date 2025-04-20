@@ -15,14 +15,15 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
   fetchWeather,
   getCoordinates,
+  getCity,
   fetchPredictedWeather,
+  explainAI,
 } from "./src/fetchrain";
 import * as Location from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
 const { width, height } = Dimensions.get("window");
-const OPENWEATHER_API_KEY = "548d28a6deb1f17129f9ce2c74e429bc";
 const isMobile = width < 768;
 
 export default function App() {
@@ -59,11 +60,8 @@ export default function App() {
         let location = await Location.getCurrentPositionAsync({});
         const { latitude, longitude } = location.coords;
 
-        // Get city name from coordinates
-        const response = await fetch(
-          `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${OPENWEATHER_API_KEY}`
-        );
-        const data = await response.json();
+        const data = await getCity(latitude, longitude);
+        console.log("Data: ", data);
         if (data.length > 0) {
           setCity(data[0].name);
           getWeather(data[0].name);
@@ -181,7 +179,7 @@ export default function App() {
     `;
 
     try {
-      const result = await model.generateContent(weatherPrompt);
+      const result = await explainAI(weatherPrompt);
       setExplanation(result.response.text());
       setExplanationVisible(true);
     } catch (error) {
@@ -392,10 +390,9 @@ export default function App() {
                   try {
                     let location = await Location.getCurrentPositionAsync({});
                     const { latitude, longitude } = location.coords;
-                    const response = await fetch(
-                      `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${OPENWEATHER_API_KEY}`
-                    );
-                    const data = await response.json();
+
+                    const data = await getCity(latitude, longitude);
+                    console.log("Data: ", data);
                     if (data.length > 0) {
                       setCity(data[0].name);
                       getWeather(data[0].name);
