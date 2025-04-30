@@ -179,7 +179,8 @@ export default function App() {
     `;
 
     try {
-      const result = await explainAI(weatherPrompt);
+      // const result = await explainAI(weatherPrompt);
+      const result = await model.generateContent(weatherPrompt);
       setExplanation(result.response.text());
       setExplanationVisible(true);
     } catch (error) {
@@ -310,6 +311,7 @@ export default function App() {
             animationType="fade"
             transparent={true}
             visible={modalVisible}
+            height="100%"
             onRequestClose={() => setModalVisible(false)}
           >
             <View style={styles.modalOverlay}>
@@ -913,7 +915,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     width: "100%",
     maxWidth: 500,
-    maxHeight: "80%",
+    maxHeight: "100%",
     padding: 0,
     elevation: 5,
     shadowColor: "#000",
