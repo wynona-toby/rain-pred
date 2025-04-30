@@ -1,4 +1,12 @@
-const OPENWEATHER_API_KEY = "548d28a6deb1f17129f9ce2c74e429bc"; // Replace with your API key
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import Constants from "expo-constants";
+const OPENWEATHER_API_KEY = Constants.expoConfig?.extra?.OPENWEATHER_API_KEY;
+const AI_API_KEY = Constants.expoConfig?.extra?.AI_API_KEY;
+const BACKEND = Constants.expoConfig?.extra?.BACKEND;
+
+const genAI = new GoogleGenerativeAI(AI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
 
 // Function to get latitude & longitude from city name
 export const getCoordinates = async (city: string) => {
@@ -15,6 +23,21 @@ export const getCoordinates = async (city: string) => {
   }
 };
 
+// Function to get city name from latitude & longitude
+export const getCity = async (latitude: number, longitude: number) => {
+  try {
+    const response = await fetch(
+      `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${OPENWEATHER_API_KEY}`
+    );
+    const data = await response.json();
+    console.log(data)
+    if (data.length === 0) throw new Error("Coordinates not found");
+    return data;
+  } catch (error) {
+    console.error("Error fetching coordinates:", error);
+    return null;
+  }
+};
 
 
 //weather data
@@ -43,7 +66,7 @@ export const fetchWeather = async (latitude: number, longitude: number) => {
   }
 };
 
-
+// Function to predict rain
 export const fetchPredictedWeather = async (
   latitude: number,
   longitude: number
@@ -72,12 +95,27 @@ export const fetchPredictedWeather = async (
         riverDischarge: data.predictions.map((p: number[]) => p[3]),
         floodRisk: data.predictions.map(
           (p: number[]) =>
-            (p[0] >= 5.0 && p[1] >= 10.0) || p[2] >= 15.0 || p[3] >= 12.0
+            (p[0] >= 5.0 && p[1] >= 10.0) || p[2] >= 5.0 || p[3] >= 12.0
         ),
       },
     };
   } catch (error) {
     console.error("Error fetching predicted weather:", error);
+    return null;
+  }
+};
+
+
+// Function for XAI
+export const explainAI = async (weatherPrompt: string) => {
+  try {
+    console.log("Expo Constants: ", Constants.expoConfig?.extra);
+    console.log("Gen AI API ", AI_API_KEY);
+    console.log("API: ", genAI);
+    const result = await model.generateContent(weatherPrompt);
+    return result;
+  } catch (error) {
+    console.error("Could not fetch an explanation:", error);
     return null;
   }
 };
