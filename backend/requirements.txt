@@ -4,3 +4,5 @@ pandas
 numpy
 tensorflow
 requests
+shap
+matplotlib

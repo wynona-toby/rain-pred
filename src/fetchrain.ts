@@ -107,13 +107,24 @@ export const fetchPredictedWeather = async (
 
 
 // Function for XAI
-export const explainAI = async (weatherPrompt: string) => {
+export const explainAI = async (
+  latitude: number,
+  longitude: number
+) => {
   try {
-    console.log("Expo Constants: ", Constants.expoConfig?.extra);
-    console.log("Gen AI API ", AI_API_KEY);
-    console.log("API: ", genAI);
-    const result = await model.generateContent(weatherPrompt);
-    return result;
+    const url = `http://127.0.0.1:5000/xai`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ latitude, longitude }),
+    });
+    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+    const data = await response.json();
+
+    return data.shap_images;
   } catch (error) {
     console.error("Could not fetch an explanation:", error);
     return null;
