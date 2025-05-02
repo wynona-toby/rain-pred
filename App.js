@@ -10,6 +10,7 @@ import {
   Animated,
   TouchableOpacity,
   Modal,
+  Image,
 } from "react-native";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
@@ -29,6 +30,7 @@ const isMobile = width < 768;
 export default function App() {
   const [weatherData, setWeatherData] = useState(null);
   const [predictedData, setPredictedData] = useState(null);
+  const [shap, setShap] = useState(null);
   const [loading, setLoading] = useState(false);
   const [city, setCity] = useState("");
   const [error, setError] = useState(null);
@@ -110,43 +112,7 @@ export default function App() {
     ]).start();
   };
 
-  const getWeather = async (cityName) => {
-    if (!cityName) {
-      setError("Please enter a city name.");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    const location = await getCoordinates(cityName);
-    if (!location) {
-      setError("City not found.");
-      setLoading(false);
-      return;
-    }
-
-    const data = await fetchWeather(location.latitude, location.longitude);
-    const predicted = await fetchPredictedWeather(
-      location.latitude,
-      location.longitude
-    );
-
-    if (data && predicted) {
-      setWeatherData(data);
-      setPredictedData(predicted);
-      setCity(cityName);
-
-      if (!savedLocations.includes(cityName.toLowerCase())) {
-        setSavedLocations([...savedLocations, cityName.toLowerCase()]);
-      }
-
-      animateContent();
-    }
-
-    setLoading(false);
-  };
-
+  
   const explainRainfall = async () => {
     if (!weatherData || !predictedData) return;
 
@@ -179,7 +145,6 @@ export default function App() {
     `;
 
     try {
-      // const result = await explainAI(weatherPrompt);
       const result = await model.generateContent(weatherPrompt);
       setExplanation(result.response.text());
       setExplanationVisible(true);
@@ -188,6 +153,82 @@ export default function App() {
       setExplanation("Could not fetch an explanation from Gemini.");
       setExplanationVisible(true);
     }
+  };
+
+  const getWeather = async (cityName) => {
+    if (!cityName) {
+      setError("Please enter a city name.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    const location = await getCoordinates(cityName);
+    if (!location) {
+      setError("City not found.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const [data, predicted] = await Promise.all([
+        fetchWeather(location.latitude, location.longitude),
+        fetchPredictedWeather(location.latitude, location.longitude)
+      ]);
+
+      if (data && predicted) {
+        setWeatherData(data);
+        setPredictedData(predicted);
+        setCity(cityName);
+
+        if (!savedLocations.includes(cityName.toLowerCase())) {
+          setSavedLocations([...savedLocations, cityName.toLowerCase()]);
+        }
+
+        // First update the UI
+        animateContent();
+
+        setLoading(false);
+
+        // Fetch additional data
+        const shapData = await explainAI(location.latitude, location.longitude);
+        setShap(shapData);
+        console.log("SHAP Data: ", shapData);
+      }
+    } catch (error) {
+      console.error("Error fetching weather data:", error);
+      setError("Failed to fetch weather data");
+    }
+
+    setLoading(false);
+  };
+
+  const displayShapPlots = (shapData) => {
+    if (!shapData) return null;
+
+    return (
+      <View style={styles.shapContainer}>
+        <Text style={styles.shapTitle}>Feature Importance Plots</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {Object.entries(shapData).map(([key, value]) => (
+            <View key={key} style={styles.shapPlot}>
+              <Text style={styles.plotLabel}>
+                {key
+                  .split("_")
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(" ")}
+              </Text>
+              <Image
+                source={{ uri: `data:image/png;base64,${value}` }}
+                style={styles.plotImage}
+                resizeMode="contain"
+              />
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    );
   };
 
   const WeatherCard = ({ date, index }) => {
@@ -572,6 +613,7 @@ export default function App() {
                     },
                   ]}
                 >
+                  {shap && displayShapPlots(shap)}
                   <Text style={styles.explanationText}>{explanation}</Text>
                 </Animated.View>
               )}
@@ -801,15 +843,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   explanationContainer: {
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: 15,
-    padding: 20,
     marginTop: 20,
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 10,
   },
   explanationText: {
     color: "#fff",
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 24,
+    marginTop: 20,
   },
   noDataContainer: {
     alignItems: "center",
@@ -967,6 +1011,38 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.9)",
     fontSize: 14,
     lineHeight: 20,
+  },
+  shapContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+    padding: 10,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  shapTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 5,
+  },
+  shapPlot: {
+    marginRight: 15,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 10,
+    padding: 10,
+  },
+  plotLabel: {
+    color: "#fff",
+    fontSize: 20,
+    marginBottom: 5,
+    textAlign: "center",
+  },
+  plotImage: {
+    width: 300,
+    height: 300,
+    borderRadius: 5,
   },
   mainScroll: {
     scrollbarWidth: "thin",
